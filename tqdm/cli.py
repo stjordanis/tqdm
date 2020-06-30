@@ -3,9 +3,9 @@ Module version for monitoring CLI pipes (`... | python -m tqdm | ...`).
 """
 from .std import tqdm, TqdmTypeError, TqdmKeyError
 from ._version import __version__  # NOQA
-import sys
-import re
 import logging
+import re
+import sys
 __all__ = ["main"]
 log = logging.getLogger(__name__)
 
@@ -126,6 +126,8 @@ CLI_EXTRA_DOC = r"""
         update_to  : bool, optional
             If true, will treat input as total elapsed iterations,
             i.e. numbers to assign to `self.n`.
+        null  : bool, optional
+            If true, will discard input (no stdout).
         manpath  : str, optional
             Directory in which to install tqdm man pages.
         comppath  : str, optional
@@ -225,8 +227,15 @@ Options:
         delim = tqdm_args.pop('delim', '\n')
         manpath = tqdm_args.pop('manpath', None)
         comppath = tqdm_args.pop('comppath', None)
+        if tqdm_args.pop('null', False):
+            class stdout(object):
+                @staticmethod
+                def write(_):
+                    pass
+        else:
+            stdout = sys.stdout
+            stdout = getattr(stdout, 'buffer', stdout)
         stdin = getattr(sys.stdin, 'buffer', sys.stdin)
-        stdout = getattr(sys.stdout, 'buffer', sys.stdout)
         if manpath or comppath:
             from os import path
             from shutil import copyfile
